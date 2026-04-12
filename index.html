@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>返信道場 — LINE返信力AI診断</title>
+<meta name="description" content="好きな人へのLINE返信、AIが採点します。自然さ・距離感・好感度を点数化。あなたの称号は？">
+<meta property="og:title" content="返信道場 — LINE返信力AI診断">
+<meta property="og:description" content="好きな人へのLINE返信、AIが採点します。あなたの称号は？">
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif; background: #f0f0f0; min-height: 100dvh; display: flex; justify-content: center; }
+#app { width: 100%; max-width: 430px; background: #fff; min-height: 100dvh; display: flex; flex-direction: column; }
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.active { display: flex; }
+
+.dojo-header { text-align: center; padding: 2.5rem 1rem 1.25rem; }
+.dojo-logo { font-size: 30px; font-weight: 800; color: #111; letter-spacing: -1px; }
+.dojo-logo em { color: #E83D4E; font-style: normal; }
+.dojo-sub { font-size: 13px; color: #999; margin-top: 6px; }
+.rate-info { font-size: 11px; color: #bbb; margin-top: 8px; }
+.rate-info span { color: #E83D4E; font-weight: 700; }
+
+.sec-label { font-size: 11px; font-weight: 700; color: #bbb; letter-spacing: .1em; text-transform: uppercase; padding: 0 1.125rem; margin: 1.25rem 0 .625rem; }
+.sit-card { margin: 0 1rem .5rem; border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 1rem 1.125rem; cursor: pointer; display: flex; align-items: center; gap: 12px; background: #fff; transition: border-color .15s, background .15s; user-select: none; }
+.sit-card:active { background: #fafafa; border-color: #e0e0e0; }
+.sit-card.locked { opacity: .4; cursor: default; }
+.sit-icon { font-size: 22px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #f7f7f7; border-radius: 12px; flex-shrink: 0; }
+.sit-info { flex: 1; min-width: 0; }
+.sit-title { font-size: 14px; font-weight: 700; color: #111; }
+.sit-desc { font-size: 12px; color: #999; margin-top: 3px; }
+.badge { font-size: 10px; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; font-weight: 700; }
+.badge-free { background: #E8F5E9; color: #2E7D32; }
+.badge-pro { background: #FFF3E0; color: #E65100; }
+.pro-banner { margin: 1.5rem 1rem 1.5rem; padding: 1rem 1.125rem; background: #FFF8F8; border-radius: 14px; border: 1.5px solid #FFCDD2; font-size: 13px; color: #C62828; text-align: center; line-height: 1.65; }
+
+.chat-header { display: flex; align-items: center; gap: 10px; padding: .875rem 1rem; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+.back-btn { cursor: pointer; color: #888; font-size: 22px; line-height: 1; padding: 2px 6px 2px 0; }
+.ch-av { width: 40px; height: 40px; border-radius: 50%; background: #FFB3BA; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.ch-name { font-size: 15px; font-weight: 700; color: #111; }
+.ch-status { font-size: 11px; color: #bbb; margin-top: 1px; }
+
+.msgs { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.row { display: flex; align-items: flex-end; gap: 8px; }
+.row.me { flex-direction: row-reverse; }
+.av { width: 30px; height: 30px; border-radius: 50%; background: #FFB3BA; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.me .av { background: #B3D9FF; }
+.bbl { max-width: 74%; padding: .625rem .9rem; border-radius: 20px; font-size: 14px; line-height: 1.6; word-break: break-word; }
+.bbl.ai { background: #f0f0f0; color: #111; border-bottom-left-radius: 4px; }
+.bbl.usr { background: #4FC95A; color: #fff; border-bottom-right-radius: 4px; }
+.ts { font-size: 10px; color: #ccc; padding-bottom: 3px; }
+
+.tdots { display: flex; gap: 4px; padding: .625rem .9rem; background: #f0f0f0; border-radius: 20px; border-bottom-left-radius: 4px; width: 54px; }
+.td { width: 7px; height: 7px; background: #bbb; border-radius: 50%; animation: bop 1.2s infinite; }
+.td:nth-child(2) { animation-delay: .2s; }
+.td:nth-child(3) { animation-delay: .4s; }
+@keyframes bop { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+
+.turn-bar { text-align: center; font-size: 11px; color: #bbb; padding: .375rem .5rem; flex-shrink: 0; }
+.inp-area { padding: .75rem 1rem; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+.inp-area textarea { flex: 1; border: 1.5px solid #e8e8e8; border-radius: 22px; padding: .5rem 1rem; font-size: 15px; resize: none; min-height: 40px; max-height: 100px; font-family: inherit; background: #fff; color: #111; outline: none; transition: border-color .15s; line-height: 1.4; }
+.inp-area textarea:focus { border-color: #4FC95A; }
+.send-btn { width: 40px; height: 40px; border-radius: 50%; background: #4FC95A; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .15s, transform .1s; }
+.send-btn:active { transform: scale(.93); }
+.send-btn:disabled { opacity: .3; cursor: default; }
+.send-btn svg { width: 16px; height: 16px; fill: white; margin-left: 2px; }
+
+.score-wrap { flex: 1; overflow-y: auto; }
+.score-top { text-align: center; padding: 1.5rem 1rem 1.25rem; }
+.score-num { font-size: 72px; font-weight: 800; color: #111; line-height: 1; letter-spacing: -2px; }
+.score-lbl { font-size: 13px; color: #aaa; margin-top: 8px; }
+.rank-pill { display: inline-block; padding: .4rem 1.375rem; border-radius: 24px; font-size: 15px; font-weight: 700; margin-top: 14px; }
+
+.bars { display: flex; flex-direction: column; gap: 11px; margin: 0 1rem 1.25rem; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-lbl { font-size: 12px; color: #999; width: 108px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+.bar-n { font-size: 12px; font-weight: 700; color: #333; width: 26px; text-align: right; }
+
+.fb-box { border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 1.125rem; margin: 0 1rem .875rem; }
+.fb-title { font-size: 11px; font-weight: 700; color: #bbb; margin-bottom: .5rem; }
+.fb-text { font-size: 13px; color: #333; line-height: 1.75; }
+.better-box { border: 1.5px solid #4FC95A; border-radius: 16px; padding: 1.125rem; margin: 0 1rem 1.25rem; }
+.better-title { font-size: 11px; font-weight: 700; color: #4FC95A; margin-bottom: .5rem; }
+.better-msg { font-size: 14px; color: #111; line-height: 1.65; background: #f7fdf7; padding: .625rem .875rem; border-radius: 10px; }
+
+/* SNS共有カード */
+.share-section { margin: 0 1rem 1.5rem; }
+.share-card-wrap { position: relative; margin-bottom: 1rem; }
+#share-canvas { width: 100%; border-radius: 16px; display: block; }
+.btn-row { display: flex; gap: 10px; }
+.btn { flex: 1; padding: .875rem; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: opacity .15s, transform .1s; }
+.btn:active { transform: scale(.97); }
+.btn.red { background: #E83D4E; color: white; }
+.btn.green { background: #4FC95A; color: white; }
+.btn.gray { background: #f3f3f3; color: #555; }
+
+/* レート制限エラー */
+.rate-error { margin: 1rem; padding: 1.25rem; background: #FFF8F8; border: 1.5px solid #FFCDD2; border-radius: 14px; text-align: center; }
+.rate-error-title { font-size: 16px; font-weight: 700; color: #C62828; margin-bottom: .5rem; }
+.rate-error-text { font-size: 13px; color: #888; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="s-select" class="screen active">
+    <div class="dojo-header">
+      <div class="dojo-logo">返信<em>道場</em></div>
+      <div class="dojo-sub">あなたのLINE返信力を、AIが本気で採点</div>
+      <div class="rate-info">今日あと <span id="remaining-count">10</span> 回診断できます</div>
+    </div>
+    <div class="sec-label">シチュエーションを選んで</div>
+    <div class="sit-card" onclick="go('crush')">
+      <div class="sit-icon">💘</div>
+      <div class="sit-info"><div class="sit-title">好きな人と距離を縮める</div><div class="sit-desc">脈あり返信で距離感を詰めよう</div></div>
+      <span class="badge badge-free">無料</span>
+    </div>
+    <div class="sit-card locked" onclick="paywall()">
+      <div class="sit-icon">👻</div>
+      <div class="sit-info"><div class="sit-title">既読無視後に自然に送る</div><div class="sit-desc">シラけずに会話を再開したい</div></div>
+      <span class="badge badge-pro">PRO</span>
+    </div>
+    <div class="sit-card locked" onclick="paywall()">
+      <div class="sit-icon">🌸</div>
+      <div class="sit-info"><div class="sit-title">デートに誘う</div><div class="sit-desc">自然な流れで誘い込む</div></div>
+      <span class="badge badge-pro">PRO</span>
+    </div>
+    <div class="sit-card locked" onclick="paywall()">
+      <div class="sit-icon">🔥</div>
+      <div class="sit-info"><div class="sit-title">復縁モード</div><div class="sit-desc">元カレ/元カノへの第一歩</div></div>
+      <span class="badge badge-pro">PRO</span>
+    </div>
+    <div class="pro-banner">PRO解放で全シチュエーション使い放題<br><strong>月額980円</strong></div>
+  </div>
+
+  <div id="s-chat" class="screen">
+    <div class="chat-header">
+      <div class="back-btn" onclick="back()">←</div>
+      <div class="ch-av" id="ch-av">👧</div>
+      <div><div class="ch-name" id="ch-name">あかり</div><div class="ch-status">練習相手 · AI</div></div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="turn-bar" id="turn-bar">あと <strong>3</strong> 往復で採点</div>
+    <div class="inp-area">
+      <textarea id="inp" placeholder="返信を入力..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button class="send-btn" id="sbtn" onclick="send()">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="s-score" class="screen">
+    <div class="score-wrap">
+      <div class="score-top">
+        <div class="score-num" id="s-num">採点中</div>
+        <div class="score-lbl">返信スコア</div>
+        <div><span class="rank-pill" id="s-rank">—</span></div>
+      </div>
+      <div class="bars" id="s-bars"></div>
+      <div class="fb-box"><div class="fb-title">AI フィードバック</div><div class="fb-text" id="s-fb"></div></div>
+      <div class="better-box"><div class="better-title">もっとよくするならこう返す</div><div class="better-msg" id="s-better"></div></div>
+
+      <div class="share-section">
+        <canvas id="share-canvas" width="900" height="500"></canvas>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn green" onclick="downloadCard()">画像を保存</button>
+          <button class="btn red" onclick="shareResult()">シェアする</button>
+        </div>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn gray" onclick="back()">もう一度</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-XXXXXXXXXX');
+</script>
+
+<script>
+const SITS = {
+  crush: {
+    name: 'あかり', av: '👧',
+    sys: 'あなたは「あかり」という名前の20代女性。ユーザーの片思いの相手として自然なLINE風の返信をする。日本語で絵文字を1〜2個使い、リアルな感じで。返信は1〜3文で短くまとめる。相手の返信の質や内容によって、興味を見せたり少し素っ気なくしたりして自然に反応を変える。会話を広げる話題を少し振る。返信文のみ出力し、説明や補足は一切不要。',
+    ops: ['最近どこか行った？🌿', 'ねえ、今週末暇？', '昨日の映画面白かった〜！あなたも好きそう']
+  }
+};
+const RANKS = [
+  { min: 85, label: '返信王者',       bg: '#FFEBEE', c: '#B71C1C' },
+  { min: 72, label: '沼らせ上手',     bg: '#FFF3E0', c: '#E65100' },
+  { min: 60, label: '距離感マスター', bg: '#E8F5E9', c: '#2E7D32' },
+  { min: 45, label: 'いい人止まり',   bg: '#E3F2FD', c: '#1565C0' },
+  { min: 0,  label: '返信初心者',     bg: '#F3E5F5', c: '#6A1B9A' }
+];
+const BCOLS = ['#4FC95A', '#4A90D9', '#E83D4E', '#FF9800', '#9C27B0'];
+const MAX = 3;
+
+let sit = null, hist = [], turns = 0, busy = false;
+let lastScore = null, lastRank = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const now = () => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const scr = id => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); };
+
+function track(event, params = {}) {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', event, params);
+  }
+}
+
+function paywall() { alert('このシチュエーションはPROプランで使えます（月額980円）'); }
+
+function back() {
+  hist = []; turns = 0; busy = false;
+  $('msgs').innerHTML = '';
+  $('inp').disabled = false; $('sbtn').disabled = false;
+  scr('s-select');
+}
+
+function go(k) {
+  sit = SITS[k]; hist = []; turns = 0; busy = false;
+  $('ch-av').textContent = sit.av; $('ch-name').textContent = sit.name;
+  $('msgs').innerHTML = ''; $('inp').disabled = false; $('sbtn').disabled = false;
+  updTurn(); scr('s-chat');
+  track('game_start', { situation: k });
+  const op = pick(sit.ops);
+  addBubble('ai', op);
+  hist.push({ role: 'assistant', content: op });
+}
+
+function addBubble(who, text) {
+  const row = document.createElement('div');
+  row.className = 'row' + (who === 'me' ? ' me' : '');
+  if (who === 'ai') {
+    row.innerHTML = `<div class="av">${sit.av}</div><div><div class="bbl ai">${esc(text)}</div><div class="ts" style="margin-top:3px">${now()}</div></div>`;
+  } else {
+    row.innerHTML = `<div class="ts">${now()}</div><div class="bbl usr">${esc(text)}</div><div class="av">🧑</div>`;
+  }
+  $('msgs').appendChild(row);
+  $('msgs').scrollTop = $('msgs').scrollHeight;
+}
+
+function showTyping() {
+  const el = document.createElement('div'); el.className = 'row'; el.id = 'typ';
+  el.innerHTML = `<div class="av">${sit.av}</div><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  $('msgs').appendChild(el); $('msgs').scrollTop = $('msgs').scrollHeight;
+}
+function hideTyping() { $('typ')?.remove(); }
+
+function updTurn() {
+  const l = MAX - turns;
+  $('turn-bar').innerHTML = l > 0 ? `あと <strong>${l}</strong> 往復で採点` : '採点します！';
+}
+function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+function resize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+
+async function callServer(payload) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const d = await res.json();
+  if (res.status === 429) {
+    showRateError(d.message);
+    throw new Error('rate_limit');
+  }
+  if (!res.ok) throw new Error(d.error || res.status);
+  if (d.remaining !== undefined) {
+    $('remaining-count').textContent = d.remaining;
+  }
+  return d.text;
+}
+
+function showRateError(msg) {
+  $('inp').disabled = true; $('sbtn').disabled = true;
+  const errDiv = document.createElement('div');
+  errDiv.className = 'rate-error';
+  errDiv.innerHTML = `<div class="rate-error-title">今日の診断回数終了</div><div class="rate-error-text">${msg || '1日10回まで無料で使えます。PRO会員なら無制限！'}</div>`;
+  $('msgs').appendChild(errDiv);
+  $('msgs').scrollTop = $('msgs').scrollHeight;
+}
+
+async function send() {
+  if (busy) return;
+  const inp = $('inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; inp.style.height = 'auto';
+  addBubble('me', text);
+  hist.push({ role: 'user', content: text });
+  turns++; updTurn();
+
+  if (turns >= MAX) {
+    $('sbtn').disabled = true; inp.disabled = true;
+    await sleep(300);
+    await doScore();
+    return;
+  }
+
+  busy = true; $('sbtn').disabled = true;
+  showTyping();
+  try {
+    const reply = await callServer({ system: sit.sys, messages: hist, max_tokens: 150, track: 'chat_turn' });
+    hideTyping();
+    addBubble('ai', reply);
+    hist.push({ role: 'assistant', content: reply });
+  } catch (e) {
+    hideTyping();
+    if (e.message !== 'rate_limit') {
+      addBubble('ai', 'ちょっと待って〜！もう一回送ってみて？');
+      hist.pop(); turns--; updTurn();
+    }
+  }
+  busy = false; $('sbtn').disabled = false; inp.focus();
+}
+
+async function doScore() {
+  scr('s-score');
+  const convo = hist.map(m => `${m.role === 'user' ? 'ユーザー' : 'あかり'}: ${m.content}`).join('\n');
+  const prompt = `以下のLINE会話でユーザーの返信を採点してください。\n\n${convo}\n\nJSON形式のみで回答（説明・コードブロック不要）:\n{"total":0-100の整数,"scores":{"自然さ":整数,"距離感":整数,"好感度":整数,"会話の続きやすさ":整数,"重く見えないか":整数},"advice":"改善点を2文で具体的に","better_reply":"最後の返信の改善例を1〜2文で","rank":"返信初心者|いい人止まり|距離感マスター|沼らせ上手|返信王者のいずれか"}`;
+
+  let r;
+  try {
+    const raw = await callServer({ messages: [{ role: 'user', content: prompt }], max_tokens: 400, track: 'score_request' });
+    r = JSON.parse(raw.replace(/```[a-z]*|```/g, '').trim());
+  } catch (e) {
+    r = { total: 72, scores: { '自然さ': 75, '距離感': 70, '好感度': 68, '会話の続きやすさ': 72, '重く見えないか': 80 }, advice: '返信のテンポは良かったです。相手への質問を1つ入れると会話が続きやすくなります。', better_reply: '「それ楽しそう！私も行きたいな〜、次どこ行くの？」', rank: '距離感マスター' };
+  }
+  showScore(r);
+  track('score_complete', { score: r.total, rank: r.rank });
+}
+
+function showScore(r) {
+  const total = Math.round(r.total || 72);
+  const rank = RANKS.find(x => total >= x.min) || RANKS[RANKS.length - 1];
+  lastScore = total; lastRank = rank.label;
+
+  let cur = 0;
+  const iv = setInterval(() => { cur = Math.min(cur + 2, total); $('s-num').textContent = cur; if (cur >= total) clearInterval(iv); }, 18);
+  const pill = $('s-rank'); pill.textContent = rank.label; pill.style.background = rank.bg; pill.style.color = rank.c;
+
+  const bars = $('s-bars'); bars.innerHTML = '';
+  Object.entries(r.scores || {}).forEach(([lbl, val], i) => {
+    const v = Math.round(val);
+    const div = document.createElement('div'); div.className = 'bar-row';
+    div.innerHTML = `<div class="bar-lbl">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:0%;background:${BCOLS[i % BCOLS.length]}" data-w="${v}"></div></div><div class="bar-n">${v}</div>`;
+    bars.appendChild(div);
+  });
+  setTimeout(() => { document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%'); }, 80);
+
+  $('s-fb').textContent = r.advice || '';
+  $('s-better').textContent = r.better_reply || '';
+
+  setTimeout(() => drawShareCard(total, rank, r.scores), 500);
+}
+
+function drawShareCard(total, rank, scores) {
+  const canvas = $('share-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 900, H = 500;
+  canvas.width = W; canvas.height = H;
+
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#E83D4E';
+  ctx.fillRect(0, 0, 8, H);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 52px sans-serif';
+  ctx.fillText('返信道場', 48, 80);
+
+  ctx.fillStyle = '#888';
+  ctx.font = '22px sans-serif';
+  ctx.fillText('LINE返信力AI診断', 48, 118);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 120px sans-serif';
+  ctx.fillText(total + '点', 48, 270);
+
+  const pillX = 48, pillY = 300;
+  const pillW = ctx.measureText(rank.label).width + 48;
+  ctx.fillStyle = rank.bg;
+  ctx.beginPath();
+  ctx.roundRect(pillX, pillY, pillW, 46, 23);
+  ctx.fill();
+  ctx.fillStyle = rank.c;
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillText(rank.label, pillX + 24, pillY + 31);
+
+  ctx.fillStyle = '#333';
+  ctx.fillRect(48, 380, W - 96, 1);
+
+  const scoreEntries = Object.entries(scores || {});
+  const barW = (W - 96) / scoreEntries.length - 12;
+  scoreEntries.forEach(([lbl, val], i) => {
+    const x = 48 + i * (barW + 12);
+    const maxH = 60;
+    const bH = Math.round((val / 100) * maxH);
+
+    ctx.fillStyle = BCOLS[i % BCOLS.length];
+    ctx.beginPath();
+    ctx.roundRect(x, 390 + (maxH - bH), barW, bH, 4);
+    ctx.fill();
+
+    ctx.fillStyle = '#666';
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, x + barW / 2, 475);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(val, x + barW / 2, 385);
+    ctx.textAlign = 'left';
+  });
+
+  ctx.fillStyle = '#444';
+  ctx.font = '18px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('henshin-dojo.vercel.app', W - 48, H - 24);
+  ctx.textAlign = 'left';
+}
+
+function downloadCard() {
+  const canvas = $('share-canvas');
+  const a = document.createElement('a');
+  a.download = `返信道場_${lastScore}点_${lastRank}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  track('share_download');
+}
+
+function shareResult() {
+  const text = `私のLINE返信力：${lastScore}点\n称号：${lastRank}\n\n返信道場で診断してみて！\nhttps://henshin-dojo.vercel.app\n\n#返信道場 #LINE返信力`;
+  if (navigator.share) {
+    navigator.share({ text, url: 'https://henshin-dojo.vercel.app' });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert('テキストをコピーしました！'));
+  }
+  track('share_click');
+}
+</script>
+</body>
+</html>

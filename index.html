@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>返信道場 — あなたのLINE返信タイプ診断</title>
+<meta name="description" content="好きな人へのLINE返信、AIが採点。あなたはメンヘラたぬき？モラハラパンダ？16タイプで診断。">
+<meta property="og:title" content="返信道場 — LINE返信タイプ診断">
+<meta property="og:description" content="好きな人へのLINE返信、AIが採点。あなたの返信タイプは16種類のどれ？">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif; background: #f0f0f0; min-height: 100dvh; display: flex; justify-content: center; }
+#app { width: 100%; max-width: 430px; background: #fff; min-height: 100dvh; display: flex; flex-direction: column; position: relative; }
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.active { display: flex; }
+
+/* ===== SELECT ===== */
+.dojo-header { text-align: center; padding: 2.5rem 1rem 1.25rem; }
+.dojo-logo { font-size: 30px; font-weight: 800; color: #111; letter-spacing: -1px; }
+.dojo-logo em { color: #E83D4E; font-style: normal; }
+.dojo-sub { font-size: 13px; color: #999; margin-top: 6px; }
+.dojo-tag { display: inline-block; margin-top: 10px; background: #FFF3E0; color: #E65100; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+
+.sec-label { font-size: 11px; font-weight: 700; color: #bbb; letter-spacing: .1em; text-transform: uppercase; padding: 0 1.125rem; margin: 1.25rem 0 .625rem; }
+.sit-card { margin: 0 1rem .5rem; border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 1rem 1.125rem; cursor: pointer; display: flex; align-items: center; gap: 12px; background: #fff; transition: background .15s; user-select: none; }
+.sit-card:active { background: #fafafa; }
+.sit-icon { font-size: 22px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #f7f7f7; border-radius: 12px; flex-shrink: 0; }
+.sit-info { flex: 1; min-width: 0; }
+.sit-title { font-size: 14px; font-weight: 700; color: #111; }
+.sit-desc { font-size: 12px; color: #999; margin-top: 3px; }
+.badge { font-size: 10px; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; font-weight: 700; }
+.badge-free { background: #E8F5E9; color: #2E7D32; }
+.badge-app { background: #E8EAF6; color: #283593; }
+.badge-hot { background: #FFEBEE; color: #B71C1C; }
+
+.app-banner { margin: 1.25rem 1rem; padding: 1.125rem; background: #F3F0FF; border-radius: 16px; border: 1.5px solid #D1C4E9; }
+.app-banner-title { font-size: 14px; font-weight: 700; color: #4527A0; margin-bottom: 4px; }
+.app-banner-text { font-size: 12px; color: #7E57C2; line-height: 1.6; }
+
+/* ===== CHAT ===== */
+.chat-header { display: flex; align-items: center; gap: 10px; padding: .875rem 1rem; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+.back-btn { cursor: pointer; color: #888; font-size: 22px; line-height: 1; padding: 2px 6px 2px 0; }
+.ch-av { width: 40px; height: 40px; border-radius: 50%; background: #FFB3BA; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.ch-name { font-size: 15px; font-weight: 700; color: #111; }
+.ch-status { font-size: 11px; color: #bbb; margin-top: 1px; }
+.turn-progress { height: 3px; background: #f0f0f0; flex-shrink: 0; }
+.turn-progress-bar { height: 100%; background: #E83D4E; transition: width .4s ease; border-radius: 0 2px 2px 0; }
+
+.msgs { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.row { display: flex; align-items: flex-end; gap: 8px; }
+.row.me { flex-direction: row-reverse; }
+.av { width: 30px; height: 30px; border-radius: 50%; background: #FFB3BA; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.me .av { background: #B3D9FF; }
+.bbl { max-width: 74%; padding: .625rem .9rem; border-radius: 20px; font-size: 14px; line-height: 1.6; word-break: break-word; }
+.bbl.ai { background: #f0f0f0; color: #111; border-bottom-left-radius: 4px; }
+.bbl.usr { background: #4FC95A; color: #fff; border-bottom-right-radius: 4px; }
+.ts { font-size: 10px; color: #ccc; padding-bottom: 3px; }
+.tdots { display: flex; gap: 4px; padding: .625rem .9rem; background: #f0f0f0; border-radius: 20px; border-bottom-left-radius: 4px; width: 54px; }
+.td { width: 7px; height: 7px; background: #bbb; border-radius: 50%; animation: bop 1.2s infinite; }
+.td:nth-child(2) { animation-delay: .2s; }
+.td:nth-child(3) { animation-delay: .4s; }
+@keyframes bop { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+
+.turn-bar { text-align: center; font-size: 11px; color: #bbb; padding: .375rem .5rem; flex-shrink: 0; }
+.inp-area { padding: .75rem 1rem; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+.inp-area textarea { flex: 1; border: 1.5px solid #e8e8e8; border-radius: 22px; padding: .5rem 1rem; font-size: 15px; resize: none; min-height: 40px; max-height: 100px; font-family: inherit; background: #fff; color: #111; outline: none; transition: border-color .15s; line-height: 1.4; }
+.inp-area textarea:focus { border-color: #4FC95A; }
+.send-btn { width: 40px; height: 40px; border-radius: 50%; background: #4FC95A; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform .1s; }
+.send-btn:active { transform: scale(.93); }
+.send-btn:disabled { opacity: .3; cursor: default; }
+.send-btn svg { width: 16px; height: 16px; fill: white; margin-left: 2px; }
+
+/* ===== SCORE ===== */
+.score-wrap { flex: 1; overflow-y: auto; }
+
+.type-hero { text-align: center; padding: 2rem 1.5rem 1.5rem; background: #0D0D0D; }
+.type-hero-label { font-size: 12px; color: #666; font-weight: 500; margin-bottom: 8px; letter-spacing: .1em; }
+.type-hero-name { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -1px; margin-bottom: 6px; }
+.type-hero-sub { font-size: 14px; color: #888; line-height: 1.6; margin-bottom: 16px; }
+.type-hero-img { width: 140px; height: 140px; object-fit: contain; border-radius: 20px; margin: 0 auto 16px; display: block; background: #1A1A1A; }
+.type-hero-img-placeholder { width: 140px; height: 140px; background: #1A1A1A; border-radius: 20px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 64px; }
+.type-code-pill { display: inline-block; padding: .3rem 1rem; background: #1A1A1A; border: 1px solid #333; border-radius: 20px; font-size: 12px; color: #666; font-family: monospace; margin-bottom: 12px; }
+.score-pill-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.score-axis-pill { padding: .3rem .75rem; border-radius: 20px; font-size: 12px; font-weight: 700; }
+
+.score-body { padding: 1.25rem 1rem; }
+
+.bars { display: flex; flex-direction: column; gap: 11px; margin-bottom: 1.25rem; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-lbl { font-size: 12px; color: #999; width: 108px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+.bar-n { font-size: 12px; font-weight: 700; color: #333; width: 26px; text-align: right; }
+
+.fb-box { border: 1.5px solid #f0f0f0; border-radius: 16px; padding: 1.125rem; margin-bottom: .875rem; }
+.fb-title { font-size: 11px; font-weight: 700; color: #bbb; margin-bottom: .5rem; }
+.fb-text { font-size: 13px; color: #333; line-height: 1.75; }
+.better-box { border: 1.5px solid #4FC95A; border-radius: 16px; padding: 1.125rem; margin-bottom: 1rem; }
+.better-title { font-size: 11px; font-weight: 700; color: #4FC95A; margin-bottom: .5rem; }
+.better-msg { font-size: 14px; color: #111; line-height: 1.65; background: #f7fdf7; padding: .625rem .875rem; border-radius: 10px; }
+
+/* あの人診断 誘導 */
+.anohito-box { margin-bottom: 1rem; padding: 1.25rem; background: #0D0D0D; border-radius: 16px; }
+.anohito-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.anohito-sub { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 12px; }
+.anohito-btn { width: 100%; padding: .875rem; background: #E83D4E; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit; }
+
+/* シェア */
+.invite-box { margin-bottom: 1rem; padding: 1.125rem; background: #FFF8F8; border: 1.5px solid #FFCDD2; border-radius: 16px; text-align: center; }
+.invite-title { font-size: 15px; font-weight: 800; color: #C62828; margin-bottom: 6px; }
+.invite-text { font-size: 12px; color: #888; line-height: 1.65; margin-bottom: 12px; }
+
+.share-section { margin-bottom: 1.5rem; }
+#share-canvas { width: 100%; border-radius: 16px; display: block; margin-bottom: 10px; }
+.btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.btn { flex: 1; padding: .875rem; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: transform .1s; }
+.btn:active { transform: scale(.97); }
+.btn.red { background: #E83D4E; color: white; }
+.btn.green { background: #4FC95A; color: white; }
+.btn.dark { background: #111; color: white; }
+.btn.gray { background: #f3f3f3; color: #555; }
+
+/* あの人診断モード */
+.anohito-input-area { padding: 1.25rem 1rem; }
+.anohito-header-box { text-align: center; padding: 1.5rem 1rem 1rem; }
+.anohito-header-title { font-size: 22px; font-weight: 800; color: #111; margin-bottom: 6px; }
+.anohito-header-sub { font-size: 13px; color: #888; line-height: 1.65; }
+.chat-paste-box { border: 1.5px solid #e8e8e8; border-radius: 16px; padding: 1rem; margin-bottom: 1rem; }
+.chat-paste-label { font-size: 12px; font-weight: 700; color: #999; margin-bottom: 8px; }
+.chat-paste-textarea { width: 100%; border: none; outline: none; font-size: 14px; color: #111; font-family: inherit; resize: none; min-height: 120px; line-height: 1.6; background: transparent; }
+.analyze-btn { width: 100%; padding: 1rem; background: #E83D4E; color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.analyze-btn:disabled { opacity: .4; cursor: default; }
+
+/* モーダル */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal-sheet { background: #fff; border-radius: 24px 24px 0 0; padding: 1.5rem 1.5rem 3rem; width: 100%; max-width: 430px; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); }
+.modal-overlay.show .modal-sheet { transform: translateY(0); }
+.modal-pill { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 0 auto 1.25rem; }
+.modal-icon { font-size: 44px; text-align: center; margin-bottom: .75rem; }
+.modal-title { font-size: 22px; font-weight: 800; color: #111; text-align: center; margin-bottom: .5rem; letter-spacing: -.5px; }
+.modal-sub { font-size: 14px; color: #888; text-align: center; line-height: 1.7; margin-bottom: 1.25rem; }
+.modal-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+.modal-feat { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #333; font-weight: 500; }
+.modal-feat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: #f5f5f5; }
+.modal-btn { width: 100%; padding: 1rem; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; border: none; font-family: inherit; margin-bottom: 10px; }
+.modal-btn.primary { background: #111; color: #fff; }
+.modal-btn.secondary { background: #f3f3f3; color: #555; font-size: 14px; font-weight: 600; padding: .75rem; }
+
+.loading-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 2rem; }
+.loading-spinner { width: 48px; height: 48px; border: 3px solid #f0f0f0; border-top-color: #E83D4E; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: #888; text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- シチュエーション選択 -->
+  <div id="s-select" class="screen active">
+    <div class="dojo-header">
+      <div class="dojo-logo">返信<em>道場</em></div>
+      <div class="dojo-sub">あなたのLINE返信タイプ、AIが本気で診断</div>
+      <div class="dojo-tag">16タイプ診断 無料</div>
+    </div>
+    <div class="sec-label">シチュエーションを選んで</div>
+    <div class="sit-card" onclick="go('crush')">
+      <div class="sit-icon">💘</div>
+      <div class="sit-info"><div class="sit-title">好きな人と距離を縮める</div><div class="sit-desc">脈あり返信で距離感を詰めよう</div></div>
+      <span class="badge badge-free">無料</span>
+    </div>
+    <div class="sit-card" onclick="showAppModal('ghost')">
+      <div class="sit-icon">👻</div>
+      <div class="sit-info"><div class="sit-title">既読無視後に自然に送る</div><div class="sit-desc">シラけずに会話を再開したい</div></div>
+      <span class="badge badge-app">アプリ</span>
+    </div>
+    <div class="sit-card" onclick="showAppModal('date')">
+      <div class="sit-icon">🌸</div>
+      <div class="sit-info"><div class="sit-title">デートに誘う</div><div class="sit-desc">自然な流れで誘い込む</div></div>
+      <span class="badge badge-app">アプリ</span>
+    </div>
+    <div class="sit-card" onclick="showAppModal('ex')">
+      <div class="sit-icon">🔥</div>
+      <div class="sit-info"><div class="sit-title">復縁モード</div><div class="sit-desc">元カレ/元カノへの第一歩</div></div>
+      <span class="badge badge-hot">人気</span>
+    </div>
+    <div class="sit-card" onclick="showAppModal('anohito')">
+      <div class="sit-icon">🔍</div>
+      <div class="sit-info">
+        <div class="sit-title">あの人診断</div>
+        <div class="sit-desc">相手の返信を貼って相手のタイプを暴く</div>
+      </div>
+      <span class="badge badge-hot">NEW</span>
+    </div>
+    <div class="app-banner">
+      <div class="app-banner-title">全シチュエーション＋あの人診断はアプリで</div>
+      <div class="app-banner-text">返信道場アプリなら全機能使い放題。近日公開予定。</div>
+    </div>
+  </div>
+
+  <!-- チャット -->
+  <div id="s-chat" class="screen">
+    <div class="chat-header">
+      <div class="back-btn" onclick="back()">←</div>
+      <div class="ch-av" id="ch-av">👧</div>
+      <div style="flex:1"><div class="ch-name" id="ch-name">あかり</div><div class="ch-status">練習相手 · AI</div></div>
+    </div>
+    <div class="turn-progress"><div class="turn-progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="turn-bar" id="turn-bar">返信してみよう</div>
+    <div class="inp-area">
+      <textarea id="inp" placeholder="返信を入力..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button class="send-btn" id="sbtn" onclick="send()">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 採点中 -->
+  <div id="s-loading" class="screen">
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">AIが返信タイプを分析中...<br>少しお待ちください</div>
+    </div>
+  </div>
+
+  <!-- スコア -->
+  <div id="s-score" class="screen">
+    <div class="score-wrap">
+      <div class="type-hero" id="type-hero">
+        <div class="type-hero-label">あなたの返信タイプ</div>
+        <div class="type-hero-img-placeholder" id="type-img-wrap">🐾</div>
+        <div class="type-hero-name" id="type-name">—</div>
+        <div class="type-hero-sub" id="type-quote">—</div>
+        <div class="type-code-pill" id="type-code">????</div>
+        <div class="score-pill-row" id="axis-pills"></div>
+      </div>
+
+      <div class="score-body">
+        <div class="bars" id="s-bars"></div>
+        <div class="fb-box"><div class="fb-title">AI フィードバック</div><div class="fb-text" id="s-fb"></div></div>
+        <div class="better-box"><div class="better-title">もっとよくするならこう返す</div><div class="better-msg" id="s-better"></div></div>
+
+        <!-- シェアボタン（一番目立つ位置） -->
+        <div style="margin-bottom:1rem;">
+          <button class="btn red" style="width:100%;padding:1.125rem;font-size:16px;border-radius:16px;margin-bottom:8px;" onclick="shareResult()">
+            友達に送る（あの子のタイプも気になる？）
+          </button>
+          <button class="btn green" style="width:100%;padding:.875rem;font-size:14px;border-radius:14px;" onclick="downloadCard()">
+            結果画像を保存する
+          </button>
+        </div>
+
+        <!-- 共有カード -->
+        <div class="share-section">
+          <canvas id="share-canvas" width="900" height="560"></canvas>
+        </div>
+
+        <!-- あの人診断 -->
+        <div class="anohito-box">
+          <div class="anohito-title">あの人は何タイプ？</div>
+          <div class="anohito-sub">好きな人の返信を貼り付けると、相手のタイプを暴けます。アプリで使えます。</div>
+          <button class="anohito-btn" onclick="showAppModal('anohito_result')">あの人のタイプを暴く →</button>
+        </div>
+
+        <!-- もう一度 -->
+        <div style="margin-bottom:1.5rem;">
+          <button class="btn gray" style="width:100%;padding:.875rem;border-radius:14px;" onclick="back()">もう一度やる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- アプリ誘導モーダル -->
+<div class="modal-overlay" id="app-modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-icon">📱</div>
+    <div class="modal-title" id="modal-title">アプリで本気練習</div>
+    <div class="modal-sub" id="modal-sub">このシチュエーションは返信道場アプリで使えます。</div>
+    <div class="modal-features">
+      <div class="modal-feat"><div class="modal-feat-icon">🔍</div>あの人診断（相手のタイプを暴く）</div>
+      <div class="modal-feat"><div class="modal-feat-icon">👻</div>既読無視後の追いLINE</div>
+      <div class="modal-feat"><div class="modal-feat-icon">🌸</div>デートの誘い方</div>
+      <div class="modal-feat"><div class="modal-feat-icon">🔥</div>復縁モード（人気No.1）</div>
+      <div class="modal-feat"><div class="modal-feat-icon">♾️</div>無制限・MAX8往復で本格診断</div>
+    </div>
+    <button class="modal-btn primary" onclick="goToApp('ios')">App Store で入手</button>
+    <button class="modal-btn primary" style="background:#3DDC84" onclick="goToApp('android')">Google Play で入手</button>
+    <button class="modal-btn secondary" onclick="closeModalBtn()">あとで</button>
+  </div>
+</div>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-59J6LCVHGP"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-59J6LCVHGP');
+</script>
+
+<script>
+const ASSET_BASE = 'https://raw.githubusercontent.com/sawa11/henshin-dojo/main/assets/';
+
+const TYPES = {
+  LAHD: { name: 'メンヘラたぬき',      quote: '深夜に「ねえ…」って送ってくるやつ',               img: 'LAHD.jpg', bg: '#FCE4EC', accent: '#E91E63' },
+  LAHI: { name: '沼らせ詐欺師',        quote: '脈ありサインを自動生成する生き物',                img: 'LAHI.jpg', bg: '#FFF3E0', accent: '#FF6F00' },
+  LPHD: { name: 'モラハラパンダ',      quote: '返信遅いと拗ねるくせに自分は既読無視',           img: 'LPHD.jpg', bg: '#FAFAFA', accent: '#212121' },
+  LPHI: { name: 'かまってちゃんくん',  quote: '自分から動けないのに寂しがる矛盾体',             img: 'LPHI.jpg', bg: '#E8F5E9', accent: '#2E7D32' },
+  HAHD: { name: '重い柴犬',            quote: '「今何してる？」を1日20回送ってくる',            img: 'HAHD.jpg', bg: '#FFF8E1', accent: '#FF6F00' },
+  HAHI: { name: 'ストーカー予備軍',    quote: '愛が重すぎてドア壊れかけてる',                   img: 'HAHI.jpg', bg: '#FCE4EC', accent: '#C62828' },
+  HPHI: { name: '距離感バグうさぎ',    quote: '親密度の計算式が根本的に狂ってる',               img: 'HPHI.jpg', bg: '#F3E5F5', accent: '#6A1B9A' },
+  HPHD: { name: '爆裂地雷もち',        quote: '突然キレる。理由は教えてくれない',               img: 'HPHD.jpg', bg: '#FBE9E7', accent: '#BF360C' },
+  LACD: { name: '既読無視マシーン',    quote: '読んでるのに返さない。息してる？',                img: 'LACD.jpg', bg: '#ECEFF1', accent: '#263238' },
+  LACI: { name: '普通すぎてつまらん',  quote: '可もなく不可もなく…でも不可かも',                img: 'LACI.jpg', bg: '#F1F8E9', accent: '#33691E' },
+  LPCD: { name: '塩対応カメ',          quote: '返信に3日かかる。亀より遅い',                    img: 'LPCD.jpg', bg: '#E8F5E9', accent: '#1B5E20' },
+  LPCI: { name: 'マイペース宇宙人',    quote: '会話の温度差が絶対零度',                         img: 'LPCI.jpg', bg: '#F1F8E9', accent: '#33691E' },
+  HACD: { name: 'いいね魔人',          quote: '反応はするけど会話できない置物',                 img: 'HACD.jpg', bg: '#FFF8E1', accent: '#E65100' },
+  HACI: { name: '余裕ぶってるだけ',    quote: '余裕があるんじゃなくて興味がない',               img: 'HACI.jpg', bg: '#FFF3E0', accent: '#BF360C' },
+  HPCD: { name: '無関心ゴリラ',        quote: '返信はするが魂が入っていない',                   img: 'HPCD.jpg', bg: '#EFEBE9', accent: '#3E2723' },
+  HPCI: { name: '返信モンスター',      quote: '唯一まともなやつ。尊い',                         img: 'HPCI.jpg', bg: '#E8EAF6', accent: '#1A237E' },
+};
+
+const AXIS_LABELS = {
+  L: { label: '軽め', color: '#4FC95A', bg: '#E8F5E9' },
+  H: { label: '重め', color: '#E83D4E', bg: '#FFEBEE' },
+  A: { label: '攻める', color: '#FF9800', bg: '#FFF3E0' },
+  P: { label: '待つ', color: '#9C27B0', bg: '#F3E5F5' },
+  Hx: { label: '感情全開', color: '#E91E63', bg: '#FCE4EC' },
+  C: { label: '塩対応', color: '#607D8B', bg: '#ECEFF1' },
+  I: { label: '自立', color: '#2196F3', bg: '#E3F2FD' },
+  D: { label: '依存', color: '#795548', bg: '#EFEBE9' },
+};
+
+const MAX_TURNS = 8;
+const SITS = {
+  crush: {
+    name: 'あかり', av: '👧',
+    sys: `あなたは「あかり」という名前の20代女性。ユーザーの片思いの相手として自然なLINE風の返信をする。
+日本語で絵文字を1〜2個使い、リアルな感じで。返信は1〜3文で短くまとめる。
+相手の返信の質や内容によって、興味を見せたり素っ気なくしたりして自然に反応を変える。
+会話を広げる話題を少し振る。
+重要：毎回の返信の最後に必ず以下の形式でJSON評価を追加すること（ユーザーには見えない形で）：
+<!--EVAL:{"intimacy":0-100,"achieved":true/false}-->
+achieved=trueは「距離が十分縮まった、デートに誘えそう、関係が進展した」と判断できる場合のみ。
+返信文のみ先に出力し、その後にJSONコメントを付ける。`,
+    ops: ['最近どこか行った？🌿', 'ねえ、今週末暇？', '昨日の映画面白かった〜！あなたも好きそう']
+  }
+};
+
+const BCOLS = ['#4FC95A', '#4A90D9', '#E83D4E', '#FF9800', '#9C27B0'];
+let sit = null, hist = [], turns = 0, busy = false;
+let lastResult = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const now = () => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const scr = id => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); $(id).classList.add('active'); };
+
+function track(event, params = {}) {
+  if (typeof gtag !== 'undefined') gtag('event', event, params);
+}
+
+function showAppModal(src) {
+  const titles = {
+    anohito: 'あの人診断を使う',
+    anohito_result: 'あの人診断を使う',
+    ghost: '既読無視モードを使う',
+    date: 'デート誘いモードを使う',
+    ex: '復縁モードを使う',
+    score: 'もっと練習する'
+  };
+  $('modal-title').textContent = titles[src] || 'アプリで本気練習';
+  track('app_modal_open', { source: src });
+  $('app-modal').classList.add('show');
+}
+function closeModal(e) { if (e.target === $('app-modal')) $('app-modal').classList.remove('show'); }
+function closeModalBtn() { $('app-modal').classList.remove('show'); }
+function goToApp(platform) {
+  track('app_store_click', { platform });
+  alert('アプリは近日公開予定です！お楽しみに🎉');
+}
+
+function back() {
+  hist = []; turns = 0; busy = false;
+  $('msgs').innerHTML = '';
+  $('inp').disabled = false; $('sbtn').disabled = false;
+  updateProgress(0);
+  scr('s-select');
+}
+
+function updateProgress(t) {
+  const pct = Math.min((t / MAX_TURNS) * 100, 100);
+  $('progress-bar').style.width = pct + '%';
+  const left = MAX_TURNS - t;
+  if (t === 0) {
+    $('turn-bar').textContent = '返信してみよう';
+  } else if (left <= 0) {
+    $('turn-bar').textContent = '診断します！';
+  } else {
+    $('turn-bar').innerHTML = `${t}往復目 / MAX${MAX_TURNS}往復`;
+  }
+}
+
+function go(k) {
+  sit = SITS[k]; hist = []; turns = 0; busy = false;
+  $('ch-av').textContent = sit.av; $('ch-name').textContent = sit.name;
+  $('msgs').innerHTML = ''; $('inp').disabled = false; $('sbtn').disabled = false;
+  updateProgress(0); scr('s-chat');
+  track('game_start', { situation: k });
+  const op = pick(sit.ops);
+  addBubble('ai', op);
+  hist.push({ role: 'assistant', content: op });
+}
+
+function addBubble(who, text) {
+  const clean = text.replace(/<!--EVAL:.*?-->/gs, '').trim();
+  const row = document.createElement('div');
+  row.className = 'row' + (who === 'me' ? ' me' : '');
+  if (who === 'ai') {
+    row.innerHTML = `<div class="av">${sit.av}</div><div><div class="bbl ai">${esc(clean)}</div><div class="ts" style="margin-top:3px">${now()}</div></div>`;
+  } else {
+    row.innerHTML = `<div class="ts">${now()}</div><div class="bbl usr">${esc(clean)}</div><div class="av">🧑</div>`;
+  }
+  $('msgs').appendChild(row);
+  $('msgs').scrollTop = $('msgs').scrollHeight;
+}
+
+function showTyping() {
+  const el = document.createElement('div'); el.className = 'row'; el.id = 'typ';
+  el.innerHTML = `<div class="av">${sit.av}</div><div class="tdots"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  $('msgs').appendChild(el); $('msgs').scrollTop = $('msgs').scrollHeight;
+}
+function hideTyping() { $('typ')?.remove(); }
+
+function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+function resize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+
+function extractEval(text) {
+  const m = text.match(/<!--EVAL:(.*?)-->/s);
+  if (!m) return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
+}
+
+async function callServer(payload) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const d = await res.json();
+  if (res.status === 429) { showRateError(d.message); throw new Error('rate_limit'); }
+  if (!res.ok) throw new Error(d.error || res.status);
+  return d.text;
+}
+
+function showRateError(msg) {
+  $('inp').disabled = true; $('sbtn').disabled = true;
+  const errDiv = document.createElement('div');
+  errDiv.style.cssText = 'margin:8px 0;padding:1.25rem;background:#F3F0FF;border:1.5px solid #D1C4E9;border-radius:14px;text-align:center';
+  errDiv.innerHTML = `<div style="font-size:15px;font-weight:800;color:#4527A0;margin-bottom:6px">今日の診断回数が終了</div><div style="font-size:13px;color:#7E57C2;line-height:1.65;margin-bottom:12px">${msg || '1日10回まで無料です。アプリなら無制限！'}</div><button onclick="showAppModal('rate_limit')" style="width:100%;padding:.75rem;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">アプリで続ける →</button>`;
+  $('msgs').appendChild(errDiv);
+  $('msgs').scrollTop = $('msgs').scrollHeight;
+  track('rate_limit_hit');
+}
+
+async function send() {
+  if (busy) return;
+  const inp = $('inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  inp.style.height = '40px';
+  addBubble('me', text);
+  hist.push({ role: 'user', content: text });
+  turns++;
+  updateProgress(turns);
+
+  if (turns >= MAX_TURNS) {
+    $('sbtn').disabled = true; inp.disabled = true;
+    await sleep(300);
+    await doScore();
+    return;
+  }
+
+  busy = true; $('sbtn').disabled = true;
+  showTyping();
+  try {
+    const reply = await callServer({ system: sit.sys, messages: hist, max_tokens: 200 });
+    hideTyping();
+    const evalData = extractEval(reply);
+    addBubble('ai', reply);
+    hist.push({ role: 'assistant', content: reply });
+
+    if (evalData?.achieved === true) {
+      $('sbtn').disabled = true; inp.disabled = true;
+      await sleep(600);
+      const successMsg = document.createElement('div');
+      successMsg.style.cssText = 'text-align:center;padding:.75rem;font-size:13px;color:#4FC95A;font-weight:700;';
+      successMsg.textContent = '✨ 距離が縮まった！診断します';
+      $('msgs').appendChild(successMsg);
+      $('msgs').scrollTop = $('msgs').scrollHeight;
+      await sleep(800);
+      await doScore();
+      return;
+    }
+  } catch (e) {
+    hideTyping();
+    if (e.message !== 'rate_limit') {
+      addBubble('ai', 'ちょっと待って〜！もう一回送ってみて？');
+      hist.pop(); turns--; updateProgress(turns);
+    }
+  }
+  busy = false; $('sbtn').disabled = false; inp.focus();
+}
+
+async function doScore() {
+  scr('s-loading');
+  const convo = hist.map(m => `${m.role === 'user' ? 'ユーザー' : sit.name}: ${m.content.replace(/<!--EVAL:.*?-->/gs, '').trim()}`).join('\n');
+  const prompt = `以下のLINE会話でユーザーの返信を4軸で採点してください。
+
+会話（${turns}往復）:
+${convo}
+
+以下のJSON形式のみで回答（説明・コードブロック不要）:
+{
+  "axes": {
+    "weight": "L or H",
+    "action": "A or P", 
+    "emotion": "H or C",
+    "depend": "I or D"
+  },
+  "type_code": "4文字のタイプコード（例：LAHD）",
+  "scores": {"自然さ":整数0-100,"距離感":整数0-100,"好感度":整数0-100,"会話力":整数0-100,"余裕度":整数0-100},
+  "total": 0-100の整数,
+  "advice": "改善点を2文で具体的に（ちょっと辛口で）",
+  "better_reply": "最後の返信の改善例を1〜2文で",
+  "turns_used": ${turns},
+  "achieved": true/false
+}
+
+採点基準：
+- weight: 返信の重さ・頻度が軽め=L、重め=H
+- action: 自分から仕掛ける=A、待ちの姿勢=P
+- emotion: 感情表現が豊か=H、クール・素っ気ない=C
+- depend: 自立した余裕がある=I、依存・不安が見える=D`;
+
+  let r;
+  try {
+    const raw = await callServer({ messages: [{ role: 'user', content: prompt }], max_tokens: 600 });
+    r = JSON.parse(raw.replace(/```[a-z]*|```/g, '').trim());
+  } catch(e) {
+    if (e.message === 'rate_limit') return;
+    r = {
+      axes: { weight: 'L', action: 'A', emotion: 'H', depend: 'D' },
+      type_code: 'LAHD',
+      scores: { '自然さ': 70, '距離感': 65, '好感度': 68, '会話力': 72, '余裕度': 60 },
+      total: 67,
+      advice: '返信のテンポは良かったです。でも少し重さが出てしまってます。もう少し余裕を持った返し方を意識してみて。',
+      better_reply: '「そうなんだ！じゃあ今度一緒に行こっか」',
+      turns_used: turns,
+      achieved: false
+    };
+  }
+  lastResult = r;
+  showScore(r);
+  track('score_complete', { type: r.type_code, turns: turns });
+}
+
+function showScore(r) {
+  const code = r.type_code || 'LAHD';
+  const typeData = TYPES[code] || TYPES['LAHD'];
+
+  const hero = $('type-hero');
+  hero.style.background = typeData.bg;
+
+  const imgWrap = $('type-img-wrap');
+  imgWrap.className = '';
+  imgWrap.style.cssText = `width:140px;height:140px;margin:0 auto 16px;display:block;border-radius:20px;overflow:hidden;background:${typeData.bg};`;
+  const img = document.createElement('img');
+  img.src = ASSET_BASE + typeData.img;
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  img.onerror = () => { imgWrap.textContent = '🐾'; imgWrap.style.fontSize = '64px'; imgWrap.style.display = 'flex'; imgWrap.style.alignItems = 'center'; imgWrap.style.justifyContent = 'center'; };
+  imgWrap.appendChild(img);
+
+  $('type-name').textContent = typeData.name;
+  $('type-name').style.color = typeData.accent;
+  $('type-quote').textContent = typeData.quote;
+  $('type-code').textContent = code;
+
+  const axisMap = [
+    { key: r.axes?.weight, L: 'L', H: 'H' },
+    { key: r.axes?.action, A: 'A', P: 'P' },
+    { key: r.axes?.emotion, H: 'Hx', C: 'C' },
+    { key: r.axes?.depend, I: 'I', D: 'D' }
+  ];
+  const pillRow = $('axis-pills');
+  pillRow.innerHTML = '';
+  const axisNames = [
+    { L: '軽め', H: '重め' },
+    { A: '攻める', P: '待つ' },
+    { Hx: '感情全開', C: '塩対応' },
+    { I: '自立', D: '依存' }
+  ];
+  [r.axes?.weight, r.axes?.action, r.axes?.emotion, r.axes?.depend].forEach((val, i) => {
+    if (!val) return;
+    const key = i === 2 && val === 'H' ? 'Hx' : val;
+    const info = AXIS_LABELS[key] || { label: val, color: '#888', bg: '#f0f0f0' };
+    const pill = document.createElement('span');
+    pill.className = 'score-axis-pill';
+    pill.style.cssText = `background:${info.bg};color:${info.color};`;
+    pill.textContent = info.label;
+    pillRow.appendChild(pill);
+  });
+
+  const bars = $('s-bars'); bars.innerHTML = '';
+  Object.entries(r.scores || {}).forEach(([lbl, val], i) => {
+    const v = Math.round(val);
+    const div = document.createElement('div'); div.className = 'bar-row';
+    div.innerHTML = `<div class="bar-lbl">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:0%;background:${BCOLS[i%BCOLS.length]}" data-w="${v}"></div></div><div class="bar-n">${v}</div>`;
+    bars.appendChild(div);
+  });
+  setTimeout(() => { document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%'); }, 100);
+
+  $('s-fb').textContent = r.advice || '';
+  $('s-better').textContent = r.better_reply || '';
+
+  scr('s-score');
+  setTimeout(() => drawShareCard(r, typeData), 800);
+}
+
+function drawShareCard(r, typeData) {
+  const canvas = $('share-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 900, H = 560;
+  canvas.width = W; canvas.height = H;
+
+  ctx.fillStyle = '#0D0D0D';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = typeData.accent;
+  ctx.fillRect(0, 0, W, 8);
+
+  ctx.fillStyle = '#1A1A1A';
+  ctx.beginPath(); ctx.roundRect(32, 24, W-64, H-48, 20); ctx.fill();
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(56, 48, 120, 120, 16); ctx.clip();
+    ctx.drawImage(img, 56, 48, 120, 120);
+    ctx.restore();
+    finishCard(ctx, r, typeData, W, H, true);
+  };
+  img.onerror = () => finishCard(ctx, r, typeData, W, H, false);
+  img.src = ASSET_BASE + typeData.img;
+}
+
+function finishCard(ctx, r, typeData, W, H, hasImg) {
+  const textX = hasImg ? 200 : 64;
+
+  ctx.fillStyle = '#888';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('あなたの返信タイプ', textX, 80);
+
+  ctx.fillStyle = typeData.accent;
+  ctx.font = 'bold 38px sans-serif';
+  ctx.fillText(typeData.name, textX, 130);
+
+  ctx.fillStyle = '#666';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(typeData.quote, textX, 158);
+
+  ctx.fillStyle = '#2A2A2A';
+  ctx.fillRect(56, 200, W-112, 1);
+
+  const total = Math.round(r.total || 70);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 72px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(total, W-100, 300);
+  ctx.fillStyle = '#555';
+  ctx.font = '18px sans-serif';
+  ctx.fillText('点', W-68, 300);
+
+  ctx.fillStyle = '#666';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`${r.turns_used || turns}往復で診断`, W-80, 325);
+  ctx.textAlign = 'left';
+
+  const entries = Object.entries(r.scores || {});
+  const bW = (W-112-(entries.length-1)*10)/entries.length;
+  entries.forEach(([lbl, val], i) => {
+    const x = 56+i*(bW+10), mH = 80, bH = Math.max(4, Math.round((val/100)*mH));
+    ctx.fillStyle = BCOLS[i%BCOLS.length]+'22';
+    ctx.beginPath(); ctx.roundRect(x, 220, bW, mH, 4); ctx.fill();
+    ctx.fillStyle = BCOLS[i%BCOLS.length];
+    ctx.beginPath(); ctx.roundRect(x, 220+mH-bH, bW, bH, 4); ctx.fill();
+    ctx.fillStyle = '#aaa';
+    ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(val, x+bW/2, 216);
+    ctx.fillStyle = '#555';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(lbl, x+bW/2, 318); ctx.textAlign = 'left';
+  });
+
+  ctx.fillStyle = '#333';
+  ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('あの子って何タイプ？ → henshin-dojo.vercel.app で診断', W/2, H-28);
+  ctx.textAlign = 'left';
+}
+
+function downloadCard() {
+  const a = document.createElement('a');
+  a.download = `返信タイプ_${lastResult?.type_code || 'result'}.png`;
+  a.href = $('share-canvas').toDataURL('image/png');
+  a.click();
+  track('share_download');
+}
+
+function shareResult() {
+  const code = lastResult?.type_code || 'LAHD';
+  const typeData = TYPES[code] || TYPES['LAHD'];
+  const text = `私の返信タイプは「${typeData.name}」でした笑\n${typeData.quote}\n\nあの子って何タイプか気になる→\nhttps://henshin-dojo.vercel.app\n\n#返信道場 #返信タイプ診断`;
+  if (navigator.share) {
+    navigator.share({ text, url: 'https://henshin-dojo.vercel.app' });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert('コピーしました！'));
+  }
+  track('share_click', { type: code });
+}
+</script>
+</body>
+</html>
